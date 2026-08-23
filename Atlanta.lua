@@ -9,6 +9,17 @@ if typeof(gethui) ~= "function" then
     end
 end
 
+-- polyfills for executors missing helpers
+if typeof(cloneref) ~= "function" then
+    function cloneref(o) return o end
+end
+if typeof(gethui) ~= "function" then
+    function gethui()
+        local ok, cg = pcall(function() return game:GetService("CoreGui") end)
+        return ok and cg or nil
+    end
+end
+
 -- REASON: Dumbass customer put their library in a request and flexed his non existant security and ended up getting it leaked by himself... 😭
 -- The code here is horrendous this is my 2nd library, the added on code was made to suit the old code however I should have just converted to a newer version of my code kind of an oopsie. 
 
@@ -1670,7 +1681,7 @@ end
 					end 
 
 					library:update_theme("low_contrast", flags["low_contrast"].Color)
-				end})
+				end })
 				:colorpicker({name = "High", color = themes.preset.high_contrast, flag = "high_contrast", callback = function(color)
 					library:update_theme("contrast", rgbseq{
 						rgbkey(0, flags["low_contrast"].Color),
@@ -1678,7 +1689,7 @@ end
 					})
 
 					library:update_theme("high_contrast", flags["high_contrast"].Color)
-				end})
+				end })
 				section:label({name = "Inline"})
 				:colorpicker({name = "Inline", color = themes.preset.inline, callback = function(color, alpha)
 					library:update_theme("inline", color)
@@ -1702,32 +1713,32 @@ end
 					if window.opened then 
 						blur.Size = int
 					end
-				end})
+				end })
 				local section = column:section({name = "Other"})
 				section:label({name = "UI Bind"})
 				:keybind({callback = window.set_menu_visibility, key = Enum.KeyCode.Insert})
 				section:toggle({name = "Keybind List", flag = "keybind_list", callback = function(bool)
 					library.keybind_list_frame.Visible = bool
-				end})
+				end })
 				section:toggle({name = "Watermark", flag = "watermark", callback = function(bool)
 					watermark.set_visible(bool)
-				end})
+				end })
 				section:button_holder({})
 				section:button({name = "Copy JobId", callback = function()
 					setclipboard(game.JobId)
-				end})
+				end })
 				section:button_holder({})
 				section:button({name = "Copy GameID", callback = function()
 					setclipboard(game.GameId)
-				end})
+				end })
 				section:button_holder({})
 				section:button({name = "Copy Join Script", callback = function()
 					setclipboard('game:GetService("TeleportService"):TeleportToPlaceInstance(' .. game.PlaceId .. ', "' .. game.JobId .. '", game.Players.LocalPlayer)')
-				end})
+				end })
 				section:button_holder({})
 				section:button({name = "Rejoin", callback = function()
 					game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, lp)
-				end})
+				end })
 				section:button_holder({})
 				section:button({name = "Join New Server", callback = function()
 					local apiRequest = game:GetService("HttpService"):JSONDecode(game:HttpGetAsync("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
@@ -1736,7 +1747,7 @@ end
 					if data.playing <= flags["max_players"] then 
 						game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, data.id)
 					end 
-				end})
+				end })
 				section:slider({name = "Max Players", flag = "max_players", min = 0, max = 40, default = 15, interval = 1})
 			-- 
 
@@ -1762,29 +1773,29 @@ end
 					section:button({name = "Create", callback = function()
 						writefile(library.directory .. "/configs/" .. flags["config_name_text_box"] .. ".cfg", library:get_config())
 						library:config_list_update()
-					end})
+					end })
 					section:button({name = "Delete", callback = function()
 						delfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg")
 						library:config_list_update()
-					end})
+					end })
 					section:button_holder({})
 					section:button({name = "Load", callback = function()
 						library:load_config(readfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg"))
 						library:notification({text = "Loaded Config: " .. flags["config_name_list"], time = 3})
-					end})
+					end })
 					section:button({name = "Save", callback = function()
 						writefile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg", library:get_config())
 						library:config_list_update()
 						library:notification({text = "Saved Config: " .. flags["config_name_list"], time = 3})
-					end})
+					end })
 					section:button_holder({})
 					section:button({name = "Refresh Configs", callback = function()
 						library:config_list_update()
-					end})
+					end })
 					section:button_holder({})
 					section:button({name = "Unload Config", callback = function()
 						library:load_config(library.old_config)
-					end})
+					end })
 					section:button({name = "Unload Menu", callback = function()
 						library:load_config(library.old_config)
 
@@ -1797,15 +1808,22 @@ end
 						end
 
 						blur:Destroy()
-					end})
+					end })
 			-- 
 					
 			-- esp preview
+				local _espPos = dim2(0, 10, 0, 10)
+				pcall(function()
+					if style and style.items and style.items.main_holder then
+						local mh = style.items.main_holder
+						_espPos = dim2(0, mh.AbsolutePosition.X, 0, mh.AbsolutePosition.Y + mh.AbsoluteSize.Y + 2)
+					end
+				end)
 				local holder = library:panel({
 					name = "ESP Preview", 
 					anchor_point = vec2(0, 0),
 					size = dim2(0, 300, 0, 325),
-					position = dim2(0, style.items.main_holder.AbsolutePosition.X, 0, style.items.main_holder.AbsolutePosition.Y + style.items.main_holder.AbsoluteSize.Y + 2),
+					position = _espPos,
 					image = "rbxassetid://77684377836328",
 				})  
 				
@@ -1831,7 +1849,7 @@ end
 				local playerlist = section:playerlist({})
 				section:dropdown({name = "Priority", items = {"Enemy", "Priority", "Neutral", "Friendly"}, default = "Neutral", flag = "PLAYERLIST_DROPDOWN", callback = function(text)
 					library.prioritize(text)
-				end})
+				end })
 			--  
 
 			return setmetatable(window, library)
@@ -3631,11 +3649,11 @@ end
 				section:button({name = "Copy", callback = function()
 					library.copied_flag = flags[cfg.flag]
 					library.is_rainbow = cfg.flag .. "_RAINBOW_FLAG"
-				end})
+				end })
 				section:button({name = "Paste", callback = function()
 					RainbowToggle.set(library.is_rainbow)
 					cfg.set(library.copied_flag.Color, library.copied_flag.Transparency)
-				end})
+				end })
 
 				local main_holder_inline = library:create("Frame", {
 					Parent = main_holder,
@@ -5928,7 +5946,7 @@ end
 
 			self:textbox({name = "Search", callback = function(txt)
 				cfg.search(txt)
-			end})
+			end })
 			cfg.labels.name = self:label({name = "Name: ??"})
 			cfg.labels.display = self:label({name = "Display Name: ??"})
 			cfg.labels.uid = self:label({name = "User Id: ??"})
