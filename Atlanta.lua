@@ -1,5 +1,16 @@
 -- polyfills for executors missing helpers
 if typeof(cloneref) ~= "function" then
+	function cloneref(o) return o end
+end
+if typeof(gethui) ~= "function" then
+	function gethui()
+		local ok, cg = pcall(function() return game:GetService("CoreGui") end)
+		return ok and cg or nil
+	end
+end
+
+-- polyfills for executors missing helpers
+if typeof(cloneref) ~= "function" then
     function cloneref(o) return o end
 end
 if typeof(gethui) ~= "function" then
@@ -1668,77 +1679,75 @@ end
 				local column = setmetatable(items, library):column() 
 				local section = column:section({name = "Theme"})
 				section:label({name = "Accent"})
-				:colorpicker({name = "Accent", color = themes.preset.accent, flag = "accent", callback = function(color, alpha)
+				section:colorpicker({name = "Accent", color = themes.preset.accent, flag = "accent", callback = function(color, alpha)
 					library:update_theme("accent", color)
-				end, flag = "Accent"})
+				end})
 				section:label({name = "Contrast"})
-				:colorpicker({name = "Low", color = themes.preset.low_contrast, flag = "low_contrast", callback = function(color)
+				section:colorpicker({name = "Low", color = themes.preset.low_contrast, flag = "low_contrast", callback = function(color)
 					if (flags["high_contrast"] and flags["low_contrast"]) then 
 						library:update_theme("contrast", rgbseq{
 							rgbkey(0, flags["low_contrast"].Color),
 							rgbkey(1, flags["high_contrast"].Color)
 						})
 					end 
-
 					library:update_theme("low_contrast", flags["low_contrast"].Color)
-				end })
-				:colorpicker({name = "High", color = themes.preset.high_contrast, flag = "high_contrast", callback = function(color)
+				end})
+				section:colorpicker({name = "High", color = themes.preset.high_contrast, flag = "high_contrast", callback = function(color)
 					library:update_theme("contrast", rgbseq{
 						rgbkey(0, flags["low_contrast"].Color),
 						rgbkey(1, flags["high_contrast"].Color)
 					})
-
 					library:update_theme("high_contrast", flags["high_contrast"].Color)
-				end })
+				end})
 				section:label({name = "Inline"})
-				:colorpicker({name = "Inline", color = themes.preset.inline, callback = function(color, alpha)
+				section:colorpicker({name = "Inline", color = themes.preset.inline, flag = "Inline", callback = function(color, alpha)
 					library:update_theme("inline", color)
-				end, flag = "Inline"})
+				end})
 				section:label({name = "Outline"})
-				:colorpicker({name = "Outline", color = themes.preset.outline, callback = function(color, alpha)
+				section:colorpicker({name = "Outline", color = themes.preset.outline, flag = "Outline", callback = function(color, alpha)
 					library:update_theme("outline", color)
-				end, flag = "Outline"})
+				end})
 				section:label({name = "Text Color"})
-				:colorpicker({name = "Main", color = themes.preset.text, callback = function(color, alpha)
+				section:colorpicker({name = "Main", color = themes.preset.text, flag = "Main", callback = function(color, alpha)
 					library:update_theme("text", color)
-				end, flag = "Main"})
-				:colorpicker({name = "Outline", color = themes.preset.text_outline, callback = function(color, alpha)
+				end})
+				section:colorpicker({name = "Outline", color = themes.preset.text_outline, flag = "text_outline_picker", callback = function(color, alpha)
 					library:update_theme("text_outline", color)
-				end, flag = "Outline"})
+				end})
 				section:label({name = "Glow"})
-				:colorpicker({name = "Glow", color = themes.preset.glow, callback = function(color, alpha)
+				section:colorpicker({name = "Glow", color = themes.preset.glow, flag = "Glow", callback = function(color, alpha)
 					library:update_theme("glow", color)
-				end, flag = "Glow"})
+				end})
 				section:slider({name = "Blur Size", flag = "Blur Size", min = 0, max = 56, default = 15, interval = 1, callback = function(int)
 					if window.opened then 
 						blur.Size = int
 					end
-				end })
+				end})
 				local section = column:section({name = "Other"})
 				section:label({name = "UI Bind"})
-				:keybind({callback = window.set_menu_visibility, key = Enum.KeyCode.Insert})
+				section:keybind({callback = window.set_menu_visibility, key = Enum.KeyCode.Insert})
 				section:toggle({name = "Keybind List", flag = "keybind_list", callback = function(bool)
 					library.keybind_list_frame.Visible = bool
-				end })
+				end})
 				section:toggle({name = "Watermark", flag = "watermark", callback = function(bool)
 					watermark.set_visible(bool)
-				end })
+				end})
 				section:button_holder({})
 				section:button({name = "Copy JobId", callback = function()
 					setclipboard(game.JobId)
-				end })
+				end})
 				section:button_holder({})
 				section:button({name = "Copy GameID", callback = function()
 					setclipboard(game.GameId)
-				end })
+				end})
 				section:button_holder({})
 				section:button({name = "Copy Join Script", callback = function()
 					setclipboard('game:GetService("TeleportService"):TeleportToPlaceInstance(' .. game.PlaceId .. ', "' .. game.JobId .. '", game.Players.LocalPlayer)')
-				end })
+				end})
 				section:button_holder({})
 				section:button({name = "Rejoin", callback = function()
 					game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, lp)
-				end })
+				end})
 				section:button_holder({})
 				section:button({name = "Join New Server", callback = function()
 					local apiRequest = game:GetService("HttpService"):JSONDecode(game:HttpGetAsync("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
@@ -1747,7 +1756,7 @@ end
 					if data.playing <= flags["max_players"] then 
 						game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, data.id)
 					end 
-				end })
+				end})
 				section:slider({name = "Max Players", flag = "max_players", min = 0, max = 40, default = 15, interval = 1})
 			-- 
 
@@ -1773,42 +1782,42 @@ end
 					section:button({name = "Create", callback = function()
 						writefile(library.directory .. "/configs/" .. flags["config_name_text_box"] .. ".cfg", library:get_config())
 						library:config_list_update()
-					end })
+					end})
 					section:button({name = "Delete", callback = function()
 						delfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg")
 						library:config_list_update()
-					end })
+					end})
 					section:button_holder({})
 					section:button({name = "Load", callback = function()
 						library:load_config(readfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg"))
 						library:notification({text = "Loaded Config: " .. flags["config_name_list"], time = 3})
-					end })
+					end})
 					section:button({name = "Save", callback = function()
 						writefile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg", library:get_config())
 						library:config_list_update()
 						library:notification({text = "Saved Config: " .. flags["config_name_list"], time = 3})
-					end })
+					end})
 					section:button_holder({})
 					section:button({name = "Refresh Configs", callback = function()
 						library:config_list_update()
-					end })
+					end})
 					section:button_holder({})
 					section:button({name = "Unload Config", callback = function()
 						library:load_config(library.old_config)
-					end })
+					end})
 					section:button({name = "Unload Menu", callback = function()
 						library:load_config(library.old_config)
 
-						for _, gui in library.guis do 
+						for _, gui in next, library.guis do 
 							gui:Destroy() 
 						end 
 
-						for _, connection in library.connections do 
+						for _, connection in next, library.connections do 
 							connection:Disconnect() 
 						end
 
 						blur:Destroy()
-					end })
+					end})
 			-- 
 					
 			-- esp preview
@@ -1849,7 +1858,7 @@ end
 				local playerlist = section:playerlist({})
 				section:dropdown({name = "Priority", items = {"Enemy", "Priority", "Neutral", "Friendly"}, default = "Neutral", flag = "PLAYERLIST_DROPDOWN", callback = function(text)
 					library.prioritize(text)
-				end })
+				end})
 			--  
 
 			return setmetatable(window, library)
@@ -3649,11 +3658,11 @@ end
 				section:button({name = "Copy", callback = function()
 					library.copied_flag = flags[cfg.flag]
 					library.is_rainbow = cfg.flag .. "_RAINBOW_FLAG"
-				end })
+				end})
 				section:button({name = "Paste", callback = function()
 					RainbowToggle.set(library.is_rainbow)
 					cfg.set(library.copied_flag.Color, library.copied_flag.Transparency)
-				end })
+				end})
 
 				local main_holder_inline = library:create("Frame", {
 					Parent = main_holder,
@@ -5946,7 +5955,7 @@ end
 
 			self:textbox({name = "Search", callback = function(txt)
 				cfg.search(txt)
-			end })
+			end})
 			cfg.labels.name = self:label({name = "Name: ??"})
 			cfg.labels.display = self:label({name = "Display Name: ??"})
 			cfg.labels.uid = self:label({name = "User Id: ??"})
