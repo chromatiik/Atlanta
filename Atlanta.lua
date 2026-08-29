@@ -2,7 +2,10 @@
 -- The code here is horrendous this is my 2nd library, the added on code was made to suit the old code however I should have just converted to a newer version of my code kind of an oopsie. 
 
 -- variables
-	local uis = cloneref(game:GetService("UserInputService"))
+	if type(cloneref) ~= "function" then
+	function cloneref(obj) return obj end
+end
+local uis = cloneref(game:GetService("UserInputService"))
 	local players = cloneref(game:GetService("Players"))
 	local ws = cloneref(game:GetService("Workspace"))
 	local http_service = cloneref(game:GetService("HttpService"))
@@ -69,7 +72,7 @@
 
 -- library init
 	local library = {
-		directory = "Atlanta",
+		directory = "Emblem",
 		folders = {
 			"/fonts",
 			"/configs",
@@ -688,7 +691,7 @@
 						AnchorPoint = vec2(1, 0);
 						Active = false;
 						BorderColor3 = rgb(0, 0, 0);
-						Text = "X";
+						Text = "";
 						Size = dim2(0, 0, 0, 0);
 						Selectable = false;
 						Position = dim2(1, -7, 0, 5);
@@ -1259,7 +1262,7 @@
 
 				library:tween(blur, {Size = bool and (flags["Blur Size"] or 15) or 0})
 
-				dock_outline.Visible = bool;
+				dock_outline.Visible = false;
 
 				sgui.Enabled = true
 				notif_holder.Enabled = true
@@ -1281,7 +1284,7 @@
 				dock_outline = library:create("Frame", {
 					Parent = sgui,
 					Name = "",
-					Visible = true,
+					Visible = false,
 					BorderColor3 = rgb(0, 0, 0),
 					AnchorPoint = vec2(0.5, 0),
 					Position = dim2(0.5, 0, 0, 20),
@@ -1528,7 +1531,7 @@
 
 			-- main window
 				local main_window = library:panel({
-					name = properties and properties.name or "Atlanta | ", 
+					name = properties and properties.name or "Emblem", 
 					size = dim2(0, 604, 0, 628),
 					position = dim2(0, (camera.ViewportSize.X / 2) - 302 - 96, 0, (camera.ViewportSize.Y / 2) - 421 - 12),
 					image = "rbxassetid://98823308062942",
@@ -1633,11 +1636,11 @@
 					image = "rbxassetid://115194686863276",
 				})
 
-				local watermark = library:watermark({default = os.date('Atlanta |  - %b %d %Y - %H:%M:%S')})  
+				local watermark = library:watermark({default = os.date('Emblem | %b %d %Y - %H:%M:%S')})  
 
 				task.spawn(function()
 					while task.wait(1) do 
-						watermark.change_text(os.date('Atlanta - Beta - %b %d %Y - %H:%M:%S'))
+						watermark.change_text(os.date('Emblem | %b %d %Y - %H:%M:%S'))
 					end 
 				end) 
 
@@ -1694,7 +1697,7 @@
 				end})
 				local section = column:section({name = "Other"})
 				section:label({name = "UI Bind"})
-				:keybind({callback = window.set_menu_visibility, key = Enum.KeyCode.Insert})
+				:keybind({callback = window.set_menu_visibility, key = Enum.KeyCode.LeftAlt})
 				section:toggle({name = "Keybind List", flag = "keybind_list", callback = function(bool)
 					library.keybind_list_frame.Visible = bool
 				end})
@@ -1787,6 +1790,10 @@
 
 						blur:Destroy()
 					end})
+				pcall(function()
+					holder.items.sgui.Enabled = false
+					window._configGui = holder.items.sgui
+				end)
 			-- 
 					
 			-- esp preview
@@ -1821,7 +1828,24 @@
 				section:dropdown({name = "Priority", items = {"Enemy", "Priority", "Neutral", "Friendly"}, default = "Neutral", flag = "PLAYERLIST_DROPDOWN", callback = function(text)
 					library.prioritize(text)
 				end})
+				pcall(function()
+					holder.items.sgui.Enabled = false
+					window._playerlistGui = holder.items.sgui
+				end)
 			--  
+
+			pcall(function()
+				if style and style.items and style.items.sgui then
+					style.items.sgui.Enabled = false
+					window._styleGui = style.items.sgui
+				end
+			end)
+			pcall(function()
+				-- Configurations holder is last panel named Configurations
+			end)
+			window._espPreviewGui = holder and holder.items and holder.items.sgui
+			-- playerlist holder overwrites local holder — find by stored refs
+			window._hideExtra = true
 
 			return setmetatable(window, library)
 		end
@@ -1935,9 +1959,13 @@
 		function library:esp_preview(properties)
 			local cfg = {items = {}, rotation = 0; objects = {};}
 
-			lp.Character.Archivable = true
-			local character = lp.Character:Clone()
-			character.Animate:Destroy()
+			local src = lp.Character or lp.CharacterAdded:Wait()
+			src.Archivable = true
+			local character = src:Clone()
+			pcall(function()
+				local a = character:FindFirstChild("Animate")
+				if a then a:Destroy() end
+			end)
 
 			local items = cfg.items; do 
 				items.viewportframe = library:create( "ViewportFrame" , {
@@ -5926,5 +5954,189 @@
 		end 
 	-- 
 -- 
+
+
+
+function library:custom_cursor()
+	if library._cursor then return library._cursor end
+	local gui = library:create("ScreenGui", {
+		Parent = gethui(),
+		IgnoreGuiInset = true,
+		DisplayOrder = 999999,
+		ResetOnSpawn = false,
+		Name = "",
+	})
+	local dot = library:create("Frame", {
+		Parent = gui,
+		Size = dim2(0, 8, 0, 8),
+		AnchorPoint = vec2(0.5, 0.5),
+		BackgroundColor3 = themes.preset.accent,
+		BorderSizePixel = 0,
+		ZIndex = 1000,
+	})
+	library:create("UICorner", { Parent = dot, CornerRadius = dim(1, 0) })
+	local ring = library:create("Frame", {
+		Parent = gui,
+		Size = dim2(0, 16, 0, 16),
+		AnchorPoint = vec2(0.5, 0.5),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ZIndex = 999,
+	})
+	library:create("UIStroke", { Parent = ring, Color = themes.preset.accent, Thickness = 1 })
+	library:create("UICorner", { Parent = ring, CornerRadius = dim(1, 0) })
+	library:connection(run.RenderStepped, function()
+		if not gui.Parent then return end
+		local pos = uis:GetMouseLocation()
+		dot.Position = dim2(0, pos.X, 0, pos.Y)
+		ring.Position = dim2(0, pos.X, 0, pos.Y)
+		pcall(function() uis.MouseIconEnabled = false end)
+	end)
+	library._cursor = { Gui = gui, Dot = dot, Ring = ring }
+	return library._cursor
+end
+
+function library:PlayerCard(params)
+	params = params or {}
+	local gui = library:create("ScreenGui", {
+		Parent = gethui(),
+		IgnoreGuiInset = true,
+		ResetOnSpawn = false,
+		DisplayOrder = 50,
+		Name = "",
+	})
+	local panel = library:create("Frame", {
+		Parent = gui,
+		Position = params.Position or dim2(0, 20, 0, 80),
+		Size = dim2(0, 280, 0, 168),
+		BackgroundColor3 = themes.preset.high_contrast,
+		BorderSizePixel = 0,
+		Active = true,
+	})
+	library:apply_theme(panel, "high_contrast", "BackgroundColor3")
+	library:create("UIStroke", { Parent = panel, Color = themes.preset.outline, Thickness = 1 })
+	library:draggify(panel)
+
+	local header = library:create("Frame", {
+		Parent = panel, Size = dim2(1, 0, 0, 18),
+		BackgroundColor3 = themes.preset.low_contrast, BorderSizePixel = 0,
+	})
+	library:create("TextLabel", {
+		Parent = header, Size = dim2(1, -8, 1, 0), Position = dim2(0, 6, 0, 0),
+		BackgroundTransparency = 1, FontFace = library.font, TextSize = 12,
+		TextXAlignment = Enum.TextXAlignment.Left, TextColor3 = themes.preset.text,
+		Text = "INDICATOR",
+	})
+	local accent = library:create("Frame", {
+		Parent = header, Size = dim2(1, 0, 0, 1), Position = dim2(0, 0, 1, -1),
+		BackgroundColor3 = themes.preset.accent, BorderSizePixel = 0,
+	})
+	library:apply_theme(accent, "accent", "BackgroundColor3")
+
+	library:create("TextLabel", {
+		Parent = panel, Position = dim2(0, 8, 0, 22), Size = dim2(1, -16, 0, 12),
+		BackgroundTransparency = 1, FontFace = library.font, TextSize = 11,
+		TextXAlignment = Enum.TextXAlignment.Left, TextColor3 = themes.preset.text, Text = "INFO",
+	})
+
+	local av = library:create("ImageLabel", {
+		Parent = panel, Position = dim2(0, 8, 0, 38), Size = dim2(0, 42, 0, 42),
+		BackgroundColor3 = themes.preset.inline, BorderSizePixel = 0,
+	})
+	local nameL = library:create("TextLabel", {
+		Parent = panel, Position = dim2(0, 56, 0, 38), Size = dim2(1, -64, 0, 12),
+		BackgroundTransparency = 1, FontFace = library.font, TextSize = 12,
+		TextXAlignment = Enum.TextXAlignment.Left, TextColor3 = themes.preset.text,
+		Text = "PLAYER",
+	})
+	local distL = library:create("TextLabel", {
+		Parent = panel, Position = dim2(0, 56, 0, 52), Size = dim2(1, -64, 0, 12),
+		BackgroundTransparency = 1, FontFace = library.font, TextSize = 11,
+		TextXAlignment = Enum.TextXAlignment.Left, TextColor3 = themes.preset.text,
+		Text = "0 STUDS",
+	})
+	local toolL = library:create("TextLabel", {
+		Parent = panel, Position = dim2(0, 56, 0, 66), Size = dim2(1, -64, 0, 12),
+		BackgroundTransparency = 1, FontFace = library.font, TextSize = 11,
+		TextXAlignment = Enum.TextXAlignment.Left, TextColor3 = themes.preset.text,
+		Text = "EQUIPPED TOOL : NONE",
+	})
+
+	local hpBg = library:create("Frame", {
+		Parent = panel, Position = dim2(0, 8, 0, 88), Size = dim2(1, -16, 0, 14),
+		BackgroundColor3 = themes.preset.low_contrast, BorderSizePixel = 0,
+	})
+	local hpFill = library:create("Frame", {
+		Parent = hpBg, Size = dim2(1, 0, 1, 0), BackgroundColor3 = themes.preset.accent, BorderSizePixel = 0,
+	})
+	library:apply_theme(hpFill, "accent", "BackgroundColor3")
+	local hpTxt = library:create("TextLabel", {
+		Parent = hpBg, Size = dim2(1, 0, 1, 0), BackgroundTransparency = 1,
+		FontFace = library.font, TextSize = 11, TextColor3 = rgb(255,255,255), Text = "100/100",
+	})
+
+	local arBg = library:create("Frame", {
+		Parent = panel, Position = dim2(0, 8, 0, 106), Size = dim2(1, -16, 0, 14),
+		BackgroundColor3 = themes.preset.low_contrast, BorderSizePixel = 0,
+	})
+	local arFill = library:create("Frame", {
+		Parent = arBg, Size = dim2(1, 0, 1, 0), BackgroundColor3 = themes.preset.accent, BorderSizePixel = 0,
+	})
+	library:apply_theme(arFill, "accent", "BackgroundColor3")
+	local arTxt = library:create("TextLabel", {
+		Parent = arBg, Size = dim2(1, 0, 1, 0), BackgroundTransparency = 1,
+		FontFace = library.font, TextSize = 11, TextColor3 = rgb(255,255,255), Text = "0/200",
+	})
+
+	local foot = library:create("TextLabel", {
+		Parent = panel, Position = dim2(0, 8, 0, 128), Size = dim2(1, -16, 0, 28),
+		BackgroundTransparency = 1, FontFace = library.font, TextSize = 11,
+		TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
+		TextColor3 = themes.preset.text, TextWrapped = true,
+		Text = "VEL: 0  |  POS: 0 0 0  |  STATUS: ALIVE",
+	})
+
+	local api = {
+		Gui = gui, Panel = panel,
+		SetVisible = function(b) panel.Visible = b == true end,
+		SetIdentity = function(o)
+			o = o or {}
+			if o.DisplayName or o.Username then
+				nameL.Text = string.upper(tostring(o.DisplayName or o.Username))
+			end
+			if o.Distance then distL.Text = tostring(o.Distance) .. " STUDS" end
+			if o.Tool then toolL.Text = "EQUIPPED TOOL : " .. tostring(o.Tool) end
+			if o.AvatarImage then av.Image = o.AvatarImage end
+		end,
+		SetHealth = function(hp, maxHp)
+			hp = tonumber(hp) or 0
+			maxHp = math.max(tonumber(maxHp) or 100, 1)
+			hpFill.Size = dim2(math.clamp(hp / maxHp, 0, 1), 0, 1, 0)
+			hpTxt.Text = string.format("%d/%d", math.floor(hp), math.floor(maxHp))
+		end,
+		SetArmor = function(ar, maxAr)
+			ar = tonumber(ar) or 0
+			maxAr = math.max(tonumber(maxAr) or 200, 1)
+			arFill.Size = dim2(math.clamp(ar / maxAr, 0, 1), 0, 1, 0)
+			arTxt.Text = string.format("%d/%d", math.floor(ar), math.floor(maxAr))
+		end,
+		SetFooter = function(vel, pos, status)
+			foot.Text = string.format("VEL: %s  |  POS: %s  |  STATUS: %s", tostring(vel or 0), tostring(pos or "-"), tostring(status or "ALIVE"))
+		end,
+		SetAvatarUserId = function(uid)
+			task.spawn(function()
+				local ok, img = pcall(function()
+					return players:GetUserThumbnailAsync(uid, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+				end)
+				if ok then av.Image = img end
+			end)
+		end,
+		Destroy = function() pcall(function() gui:Destroy() end) end,
+	}
+	if params.UserId then api.SetAvatarUserId(params.UserId) end
+	if params.Visible == false then api.SetVisible(false) end
+	return api
+end
+
 
 return library, themes; 
